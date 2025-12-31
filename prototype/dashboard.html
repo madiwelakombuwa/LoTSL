@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard - Library of Things</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">📚 Library of Things</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Browse Items</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="dashboard.html" class="active">Dashboard</a></li>
+        <li>
+          <div class="user-badge">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User" class="user-avatar">
+            <span id="user-name">Alex J.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- User Profile Header -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <img id="profile-avatar" src="" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%;">
+        <div style="flex: 1;">
+          <h1 id="profile-name" style="margin-bottom: 0.5rem;"></h1>
+          <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <span id="profile-tier"></span>
+            <span style="color: var(--text-light); font-size: 0.875rem;">Member since <span id="joined-date"></span></span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);" id="total-points"></div>
+          <div style="color: var(--text-light); font-size: 0.875rem;">Total Points</div>
+        </div>
+      </div>
+
+      <!-- Membership Progress -->
+      <div id="membership-progress" style="margin-top: 1.5rem;"></div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+      <div class="stat-card">
+        <div class="stat-label">Active Loans</div>
+        <div class="stat-value" id="active-loans-count"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Borrowed</div>
+        <div class="stat-value" id="total-loans-count"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Max Concurrent Items</div>
+        <div class="stat-value" id="max-items"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Max Loan Days</div>
+        <div class="stat-value" id="max-days"></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+      <!-- Active Loans -->
+      <div>
+        <div class="section-header">
+          <h2 class="section-title">Active Loans</h2>
+          <a href="catalog.html" class="btn btn-primary btn-small">Borrow More</a>
+        </div>
+
+        <div id="active-loans-list"></div>
+
+        <!-- Loan History -->
+        <h3 style="margin: 2rem 0 1rem;">Recent History</h3>
+        <div id="loan-history"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div>
+        <!-- Points Ledger -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">Recent Points</h3>
+          <div id="points-ledger"></div>
+          <a href="#" style="display: block; text-align: center; margin-top: 1rem; color: var(--primary); text-decoration: none; font-weight: 600;">View Full History →</a>
+        </div>
+
+        <!-- Leaderboard Position -->
+        <div class="card">
+          <h3 style="margin-bottom: 1rem;">Your Rank</h3>
+          <div id="leaderboard-preview"></div>
+          <a href="#" style="display: block; text-align: center; margin-top: 1rem; color: var(--primary); text-decoration: none; font-weight: 600;">View Full Leaderboard →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Membership Benefits -->
+    <div class="card">
+      <h2 style="margin-bottom: 1rem;">Your Membership Benefits</h2>
+      <div id="membership-benefits"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const user = CURRENT_USER;
+    const tier = MEMBERSHIP_TIERS[user.membershipTier];
+
+    // Profile Header
+    document.getElementById('profile-avatar').src = user.profileImage;
+    document.getElementById('profile-name').textContent = `${user.firstName} ${user.lastName}`;
+    document.getElementById('profile-tier').innerHTML = `<span class="tier-badge tier-${user.membershipTier}">${tier.name}</span>`;
+    document.getElementById('joined-date').textContent = new Date(user.joinedDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    document.getElementById('total-points').textContent = user.points;
+    document.getElementById('user-name').textContent = user.firstName + ' ' + user.lastName.charAt(0) + '.';
+
+    // Membership Progress
+    const nextTier = user.membershipTier === 'bronze' ? MEMBERSHIP_TIERS.silver :
+                     user.membershipTier === 'silver' ? MEMBERSHIP_TIERS.gold : null;
+
+    if (nextTier) {
+      const progress = (user.points / nextTier.pointsRequired) * 100;
+      const remaining = nextTier.pointsRequired - user.points;
+      document.getElementById('membership-progress').innerHTML = `
+        <div class="progress-container">
+          <div class="progress-label">
+            <span>Progress to ${nextTier.name}</span>
+            <span><strong>${user.points}</strong> / ${nextTier.pointsRequired} points</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill ${user.membershipTier === 'silver' ? 'gold' : ''}" style="width: ${Math.min(progress, 100)}%"></div>
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-light);">
+            ${remaining > 0 ? `${remaining} points until ${nextTier.name} membership!` : 'Ready to upgrade!'}
+          </div>
+        </div>
+      `;
+    } else {
+      document.getElementById('membership-progress').innerHTML = `
+        <div class="alert alert-success">
+          🎉 You've reached the highest membership tier! Keep earning points to maintain your rank.
+        </div>
+      `;
+    }
+
+    // Quick Stats
+    document.getElementById('active-loans-count').textContent = user.activeLoans;
+    document.getElementById('total-loans-count').textContent = user.totalLoans;
+    document.getElementById('max-items').textContent = tier.maxItems;
+    document.getElementById('max-days').textContent = tier.maxDays;
+
+    // Active Loans
+    const activeLoansContainer = document.getElementById('active-loans-list');
+    if (ACTIVE_LOANS.length === 0) {
+      activeLoansContainer.innerHTML = '<div class="alert alert-info">No active loans. Browse the catalog to borrow items!</div>';
+    } else {
+      ACTIVE_LOANS.forEach(loan => {
+        const isOverdue = loan.daysRemaining < 0;
+        const statusClass = isOverdue ? 'danger' : loan.daysRemaining <= 3 ? 'warning' : 'success';
+        const statusText = isOverdue ? 'Overdue' : `${loan.daysRemaining} days left`;
+
+        activeLoansContainer.innerHTML += `
+          <div class="loan-card">
+            <div class="loan-icon">📦</div>
+            <div class="loan-details">
+              <div class="loan-item-name">${loan.itemName}</div>
+              <div class="loan-dates">
+                Borrowed: ${new Date(loan.loanDate).toLocaleDateString()} |
+                Due: ${new Date(loan.dueDate).toLocaleDateString()}
+              </div>
+              ${loan.extensionCount > 0 ? `<div style="font-size: 0.75rem; color: var(--text-light);">Extended ${loan.extensionCount}x</div>` : ''}
+            </div>
+            <div class="loan-status">
+              <div class="days-remaining ${statusClass}">${Math.abs(loan.daysRemaining)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-light);">${statusText}</div>
+              <button class="btn btn-small ${isOverdue ? 'btn-danger' : 'btn-secondary'}" style="margin-top: 0.5rem;" onclick="returnItem(${loan.id})">
+                ${isOverdue ? 'Return Now!' : 'Return'}
+              </button>
+              ${!isOverdue && loan.extensionCount < tier.extensions ? `
+                <button class="btn btn-small btn-secondary" style="margin-top: 0.25rem;" onclick="extendLoan(${loan.id})">Extend</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Loan History
+    const historyContainer = document.getElementById('loan-history');
+    LOAN_HISTORY.slice(0, 5).forEach(loan => {
+      const statusIcon = loan.status === 'returned' ? '✅' :
+                        loan.status === 'returned_late' ? '⏰' : '📦';
+      const statusText = loan.status === 'returned' ? 'Returned on time' :
+                        loan.status === 'returned_late' ? `Returned ${loan.daysLate} days late` :
+                        'Active';
+      const pointsClass = loan.pointsEarned > 0 ? 'positive' : 'negative';
+
+      historyContainer.innerHTML += `
+        <div class="ledger-item">
+          <div class="ledger-icon">${statusIcon}</div>
+          <div class="ledger-details">
+            <div class="ledger-action">${loan.itemName}</div>
+            <div class="ledger-date">${statusText}</div>
+            ${loan.communityPost ? '<div style="font-size: 0.75rem; color: var(--secondary);">📸 Community post submitted</div>' : ''}
+          </div>
+          <div class="ledger-points ${pointsClass}">
+            ${loan.pointsEarned > 0 ? '+' : ''}${loan.pointsEarned}
+          </div>
+        </div>
+      `;
+    });
+
+    // Points Ledger
+    const ledgerContainer = document.getElementById('points-ledger');
+    POINTS_LEDGER.slice(0, 5).forEach(entry => {
+      const pointsClass = entry.points > 0 ? 'positive' : 'negative';
+      ledgerContainer.innerHTML += `
+        <div class="ledger-item">
+          <div class="ledger-icon">${entry.icon}</div>
+          <div class="ledger-details">
+            <div class="ledger-action">${entry.action}</div>
+            <div class="ledger-date">${new Date(entry.date).toLocaleDateString()}</div>
+          </div>
+          <div class="ledger-points ${pointsClass}">
+            ${entry.points > 0 ? '+' : ''}${entry.points}
+          </div>
+        </div>
+      `;
+    });
+
+    // Leaderboard Preview
+    const leaderboardContainer = document.getElementById('leaderboard-preview');
+    const userRank = LEADERBOARD.find(u => u.isCurrentUser);
+    const surrounding = LEADERBOARD.slice(Math.max(0, userRank.rank - 2), userRank.rank + 1);
+
+    surrounding.forEach(entry => {
+      leaderboardContainer.innerHTML += `
+        <div class="leaderboard-item ${entry.isCurrentUser ? 'highlight' : ''}">
+          <div class="rank rank-${entry.rank}">#${entry.rank}</div>
+          <img src="${entry.avatar}" alt="${entry.username}" class="leaderboard-avatar">
+          <div class="leaderboard-info">
+            <div class="leaderboard-name">${entry.username} ${entry.isCurrentUser ? '(You)' : ''}</div>
+            <span class="tier-badge tier-${entry.tier}" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">${MEMBERSHIP_TIERS[entry.tier].name}</span>
+          </div>
+          <div class="leaderboard-points">${entry.points}</div>
+        </div>
+      `;
+    });
+
+    // Membership Benefits
+    const benefitsContainer = document.getElementById('membership-benefits');
+    benefitsContainer.innerHTML = `
+      <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+        ${tier.benefits.map(benefit => `
+          <li style="padding: 0.75rem; background: var(--bg); border-radius: 8px; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: var(--secondary); font-size: 1.25rem;">✓</span>
+            <span>${benefit}</span>
+          </li>
+        `).join('')}
+      </ul>
+    `;
+
+    // Actions
+    function returnItem(loanId) {
+      if (confirm('Are you ready to return this item? Make sure to take photos for a community post to earn bonus points!')) {
+        alert('Return process started! In a real app, this would process the return and prompt for community post.');
+      }
+    }
+
+    function extendLoan(loanId) {
+      const loan = ACTIVE_LOANS.find(l => l.id === loanId);
+      if (confirm(`Extend loan for ${loan.itemName} by ${tier.maxDays} days?`)) {
+        alert('Loan extended successfully!');
+      }
+    }
+  </script>
+</body>
+</html>

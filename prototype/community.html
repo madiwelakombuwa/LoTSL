@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Projects - Library of Things</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">📚 Library of Things</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html">Browse Items</a></li>
+        <li><a href="community.html" class="active">Community</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li>
+          <div class="user-badge">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User" class="user-avatar">
+            <span id="user-name">Alex J.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Community Projects</h1>
+        <p style="color: var(--text-light); margin-top: 0.5rem;">See what amazing things our members are building!</p>
+      </div>
+      <button class="btn btn-primary" onclick="showSubmitModal()">📸 Share Your Project</button>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="alert alert-info" style="margin-bottom: 2rem;">
+      <strong>Earn +25 points!</strong> Share what you built with borrowed items and get your post approved. Featured projects earn +50 points!
+    </div>
+
+    <!-- Filter Tags -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
+      <button class="tag" onclick="filterByTag('all')" id="tag-all" style="cursor: pointer; border: 2px solid var(--primary); background: var(--primary); color: white;">All Projects</button>
+      <button class="tag" onclick="filterByTag('3D Printing')" style="cursor: pointer; border: 1px solid var(--border);">3D Printing</button>
+      <button class="tag" onclick="filterByTag('Robotics')" style="cursor: pointer; border: 1px solid var(--border);">Robotics</button>
+      <button class="tag" onclick="filterByTag('LEGO')" style="cursor: pointer; border: 1px solid var(--border);">LEGO</button>
+      <button class="tag" onclick="filterByTag('IoT')" style="cursor: pointer; border: 1px solid var(--border);">IoT</button>
+      <button class="tag" onclick="filterByTag('DIY')" style="cursor: pointer; border: 1px solid var(--border);">DIY</button>
+      <button class="tag" onclick="filterByTag('Woodworking')" style="cursor: pointer; border: 1px solid var(--border);">Woodworking</button>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="grid grid-2" id="posts-grid">
+      <!-- Posts will be loaded here -->
+    </div>
+
+    <!-- Submit Post Modal -->
+    <div id="submit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+      <div style="max-width: 700px; margin: 2rem auto; background: white; border-radius: 12px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2>Share Your Project</h2>
+          <button onclick="closeSubmitModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <form onsubmit="submitPost(event)">
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Which item did you use?</label>
+            <select id="post-item" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+              <option value="">Select an item...</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Project Title</label>
+            <input type="text" id="post-title" required placeholder="e.g., Custom Robot Gripper" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Description</label>
+            <textarea id="post-description" required placeholder="Tell us about your project! What did you build? What challenges did you face?" rows="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;"></textarea>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Project Images</label>
+            <div style="padding: 2rem; border: 2px dashed var(--border); border-radius: 8px; text-align: center; background: var(--bg); cursor: pointer;" onclick="document.getElementById('file-input').click()">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📷</div>
+              <div style="color: var(--text-light);">Click to upload images</div>
+              <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.25rem;">PNG, JPG up to 10MB</div>
+              <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+            </div>
+          </div>
+
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Tags (comma separated)</label>
+            <input type="text" id="post-tags" placeholder="e.g., 3D Printing, Robotics, Arduino" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+          </div>
+
+          <div class="alert alert-success" style="margin-bottom: 1rem;">
+            🎉 Your post will be reviewed by admins. Once approved, you'll earn <strong>+25 points</strong>!
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Project</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Post Detail Modal -->
+    <div id="detail-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+      <div style="max-width: 900px; margin: 2rem auto; background: white; border-radius: 12px; overflow: hidden;">
+        <div id="detail-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    let currentFilter = 'all';
+    let allPosts = [...COMMUNITY_POSTS];
+
+    function renderPosts() {
+      const grid = document.getElementById('posts-grid');
+      grid.innerHTML = '';
+
+      const filtered = currentFilter === 'all' ?
+        allPosts :
+        allPosts.filter(post => post.tags.includes(currentFilter));
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-light);">No posts found for this tag.</div>';
+        return;
+      }
+
+      filtered.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'post-card';
+        card.style.cursor = 'pointer';
+        card.onclick = () => showPostDetail(post);
+        card.innerHTML = `
+          <img src="${post.imageUrl}" alt="${post.title}" class="post-image">
+          <div class="post-content">
+            <div class="post-header">
+              <img src="${post.userAvatar}" alt="${post.userName}" class="post-avatar">
+              <div class="post-author">
+                <div class="post-name">${post.userName}</div>
+                <div class="post-date">${new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+              </div>
+            </div>
+            <div class="post-title">${post.title}</div>
+            <div class="post-description">${post.description.substring(0, 120)}${post.description.length > 120 ? '...' : ''}</div>
+            <div class="post-tags">
+              ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+            <div class="post-footer">
+              <div style="color: var(--text-light); font-size: 0.875rem;">Used: <strong>${post.itemName}</strong></div>
+              <div class="likes">
+                <span style="font-size: 1.25rem;">❤️</span>
+                <span>${post.likes}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterByTag(tag) {
+      currentFilter = tag;
+
+      // Update active tag styling
+      document.querySelectorAll('[id^="tag-"]').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--primary)';
+        btn.style.border = '1px solid var(--border)';
+      });
+
+      const activeBtn = document.getElementById('tag-all') || event.target;
+      if (tag === 'all') {
+        document.getElementById('tag-all').style.background = 'var(--primary)';
+        document.getElementById('tag-all').style.color = 'white';
+        document.getElementById('tag-all').style.border = '2px solid var(--primary)';
+      } else {
+        event.target.style.background = 'var(--primary)';
+        event.target.style.color = 'white';
+        event.target.style.border = '2px solid var(--primary)';
+      }
+
+      renderPosts();
+    }
+
+    function showPostDetail(post) {
+      const content = document.getElementById('detail-content');
+      content.innerHTML = `
+        <img src="${post.imageUrl}" alt="${post.title}" style="width: 100%; max-height: 500px; object-fit: cover;">
+        <div style="padding: 2rem;">
+          <div class="post-header" style="margin-bottom: 1.5rem;">
+            <img src="${post.userAvatar}" alt="${post.userName}" class="post-avatar">
+            <div class="post-author">
+              <div class="post-name">${post.userName}</div>
+              <div class="post-date">${new Date(post.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+            </div>
+            <button onclick="closeDetailModal()" style="margin-left: auto; background: none; border: none; font-size: 2rem; cursor: pointer;">&times;</button>
+          </div>
+
+          <h1 style="margin-bottom: 1rem;">${post.title}</h1>
+
+          <div style="margin-bottom: 1.5rem;">
+            <div style="display: inline-block; padding: 0.5rem 1rem; background: var(--bg); border-radius: 8px; font-size: 0.875rem;">
+              📦 Built with: <strong>${post.itemName}</strong>
+            </div>
+          </div>
+
+          <div class="post-tags" style="margin-bottom: 1.5rem;">
+            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+          </div>
+
+          <p style="font-size: 1.1rem; line-height: 1.8; color: var(--text); margin-bottom: 2rem;">
+            ${post.description}
+          </p>
+
+          <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <button class="btn btn-primary" style="flex: 1;" onclick="likePost(${post.id})">
+              ❤️ Like (${post.likes})
+            </button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="alert('Comment feature coming soon!')">
+              💬 Comment
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('detail-modal').style.display = 'block';
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').style.display = 'none';
+    }
+
+    function showSubmitModal() {
+      // Populate items dropdown with user's loan history
+      const itemSelect = document.getElementById('post-item');
+      itemSelect.innerHTML = '<option value="">Select an item...</option>';
+
+      // Add current active loans
+      ACTIVE_LOANS.forEach(loan => {
+        itemSelect.innerHTML += `<option value="${loan.itemId}">${loan.itemName} (Currently borrowed)</option>`;
+      });
+
+      // Add recent history
+      LOAN_HISTORY.forEach(loan => {
+        itemSelect.innerHTML += `<option value="${loan.id}">${loan.itemName} (Recently returned)</option>`;
+      });
+
+      document.getElementById('submit-modal').style.display = 'block';
+    }
+
+    function closeSubmitModal() {
+      document.getElementById('submit-modal').style.display = 'none';
+    }
+
+    function submitPost(event) {
+      event.preventDefault();
+
+      const title = document.getElementById('post-title').value;
+      const description = document.getElementById('post-description').value;
+      const tags = document.getElementById('post-tags').value;
+
+      alert(`🎉 Project submitted successfully!\n\nYour post "${title}" is now pending admin approval. You'll earn +25 points once approved!`);
+      closeSubmitModal();
+
+      // Reset form
+      event.target.reset();
+    }
+
+    function likePost(postId) {
+      const post = COMMUNITY_POSTS.find(p => p.id === postId);
+      if (post) {
+        post.likes++;
+        showPostDetail(post); // Refresh to show updated likes
+        // In real app, this would save to backend
+      }
+    }
+
+    // Initial render
+    renderPosts();
+
+    // Update user name
+    document.getElementById('user-name').textContent = CURRENT_USER.firstName + ' ' + CURRENT_USER.lastName.charAt(0) + '.';
+
+    // Close modals on outside click
+    document.getElementById('submit-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeSubmitModal();
+    });
+
+    document.getElementById('detail-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeDetailModal();
+    });
+  </script>
+</body>
+</html>

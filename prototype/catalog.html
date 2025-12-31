@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Items - Library of Things</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">📚 Library of Things</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="catalog.html" class="active">Browse Items</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li>
+          <div class="user-badge">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User" class="user-avatar">
+            <span id="user-name">Alex J.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="section-title" style="margin-bottom: 1.5rem;">Browse Items</h1>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">Search:</label>
+        <input type="search" id="search" placeholder="Search items...">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Category:</label>
+        <select id="category-filter">
+          <option value="all">All Categories</option>
+          <option value="3d_printer">3D Printers</option>
+          <option value="lego">LEGO</option>
+          <option value="rc_equipment">RC Equipment</option>
+          <option value="iot">IoT Devices</option>
+          <option value="tools">Tools</option>
+          <option value="robotics">Robotics</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Availability:</label>
+        <select id="availability-filter">
+          <option value="all">All Items</option>
+          <option value="available">Available Now</option>
+          <option value="unavailable">Currently Out</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Sort by:</label>
+        <select id="sort-filter">
+          <option value="popularity">Popularity</option>
+          <option value="name">Name (A-Z)</option>
+          <option value="availability">Availability</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Items Grid -->
+    <div class="grid grid-3" id="items-grid">
+      <!-- Items will be loaded here -->
+    </div>
+
+    <!-- Item Detail Modal (Simple overlay) -->
+    <div id="item-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+      <div style="max-width: 800px; margin: 2rem auto; background: white; border-radius: 12px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 id="modal-title"></h2>
+          <button onclick="closeModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer;">&times;</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div>
+            <img id="modal-image" style="width: 100%; border-radius: 8px; margin-bottom: 1rem;">
+            <div id="modal-status"></div>
+          </div>
+          <div>
+            <div id="modal-details"></div>
+            <div id="modal-actions" style="margin-top: 1.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    let filteredItems = [...ITEMS];
+
+    function renderItems() {
+      const grid = document.getElementById('items-grid');
+      grid.innerHTML = '';
+
+      if (filteredItems.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-light);">No items found matching your filters.</div>';
+        return;
+      }
+
+      filteredItems.forEach(item => {
+        const statusClass = item.availableQuantity === 0 ? 'status-unavailable' :
+                           item.availableQuantity <= 2 ? 'status-limited' : 'status-available';
+        const statusText = item.availableQuantity === 0 ? 'Unavailable' :
+                          item.availableQuantity <= 2 ? `Only ${item.availableQuantity} left` : 'Available';
+
+        const card = document.createElement('div');
+        card.className = 'card item-card';
+        card.onclick = () => showItemDetail(item);
+        card.innerHTML = `
+          <div class="item-status ${statusClass}">${statusText}</div>
+          <img src="${item.imageUrl}" alt="${item.name}" class="item-image">
+          <div class="item-category">${item.category.replace(/_/g, ' ').toUpperCase()}</div>
+          <div class="item-name">${item.name}</div>
+          <div class="item-description">${item.description}</div>
+          <div class="item-meta">
+            <span class="badge">📊 ${item.popularity}% popular</span>
+            ${item.requiresTraining ? '<span class="badge">🎓 Training</span>' : ''}
+          </div>
+          ${item.waitlistCount ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-light);">${item.waitlistCount} people waiting</div>` : ''}
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function showItemDetail(item) {
+      document.getElementById('modal-title').textContent = item.name;
+      document.getElementById('modal-image').src = item.imageUrl;
+
+      const statusClass = item.availableQuantity === 0 ? 'status-unavailable' :
+                         item.availableQuantity <= 2 ? 'status-limited' : 'status-available';
+      const statusText = item.availableQuantity === 0 ? 'Currently Unavailable' :
+                        item.availableQuantity <= 2 ? `Limited - Only ${item.availableQuantity} Available` :
+                        `✓ Available (${item.availableQuantity} in stock)`;
+
+      document.getElementById('modal-status').innerHTML = `<div class="item-status ${statusClass}" style="position: static; display: inline-block;">${statusText}</div>`;
+
+      const tier = MEMBERSHIP_TIERS[CURRENT_USER.membershipTier];
+      const canBorrow = CURRENT_USER.activeLoans < tier.maxItems && CURRENT_USER.points >= 0;
+
+      document.getElementById('modal-details').innerHTML = `
+        <div style="margin-bottom: 1rem;">
+          <span class="item-category">${item.category.replace(/_/g, ' ').toUpperCase()}</span>
+        </div>
+        <p style="color: var(--text-light); margin-bottom: 1rem;">${item.description}</p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <strong>Serial Number:</strong>
+            <span>${item.serialNumber}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <strong>Condition:</strong>
+            <span style="text-transform: capitalize;">${item.condition}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <strong>Value:</strong>
+            <span>$${item.estimatedValue}</span>
+          </div>
+          ${item.requiresTraining ? '<div style="padding: 0.5rem; background: #FEF3C7; border-radius: 4px; font-size: 0.875rem;">🎓 Training certification required</div>' : ''}
+          ${item.insuranceRequired ? '<div style="padding: 0.5rem; background: #DBEAFE; border-radius: 4px; font-size: 0.875rem;">🛡️ Insurance/deposit required</div>' : ''}
+        </div>
+      `;
+
+      let actions = '';
+      if (item.availableQuantity > 0 && canBorrow) {
+        actions = `<button class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;" onclick="borrowItem(${item.id})">Borrow This Item</button>`;
+      } else if (item.availableQuantity === 0) {
+        actions = `
+          <button class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;" onclick="joinWaitlist(${item.id})">Join Waitlist</button>
+          ${item.waitlistCount ? `<div style="text-align: center; font-size: 0.875rem; color: var(--text-light);">${item.waitlistCount} people ahead of you</div>` : ''}
+        `;
+      } else if (!canBorrow) {
+        if (CURRENT_USER.points < 0) {
+          actions = '<div class="alert alert-warning">You need positive points to borrow items. Return overdue items or post community content!</div>';
+        } else {
+          actions = `<div class="alert alert-warning">You've reached your membership limit (${tier.maxItems} items). Return items or upgrade your tier!</div>`;
+        }
+      }
+
+      document.getElementById('modal-actions').innerHTML = actions;
+      document.getElementById('item-modal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('item-modal').style.display = 'none';
+    }
+
+    function borrowItem(itemId) {
+      alert('Borrow request submitted! In a real app, this would process the loan.');
+      closeModal();
+    }
+
+    function joinWaitlist(itemId) {
+      alert('Added to waitlist! We\'ll notify you when this item becomes available.');
+      closeModal();
+    }
+
+    // Filters
+    document.getElementById('search').addEventListener('input', applyFilters);
+    document.getElementById('category-filter').addEventListener('change', applyFilters);
+    document.getElementById('availability-filter').addEventListener('change', applyFilters);
+    document.getElementById('sort-filter').addEventListener('change', applyFilters);
+
+    function applyFilters() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const category = document.getElementById('category-filter').value;
+      const availability = document.getElementById('availability-filter').value;
+      const sort = document.getElementById('sort-filter').value;
+
+      // Filter
+      filteredItems = ITEMS.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(search) ||
+                             item.description.toLowerCase().includes(search);
+        const matchesCategory = category === 'all' || item.category === category;
+        const matchesAvailability = availability === 'all' ||
+                                   (availability === 'available' && item.availableQuantity > 0) ||
+                                   (availability === 'unavailable' && item.availableQuantity === 0);
+
+        return matchesSearch && matchesCategory && matchesAvailability;
+      });
+
+      // Sort
+      if (sort === 'popularity') {
+        filteredItems.sort((a, b) => b.popularity - a.popularity);
+      } else if (sort === 'name') {
+        filteredItems.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sort === 'availability') {
+        filteredItems.sort((a, b) => b.availableQuantity - a.availableQuantity);
+      }
+
+      renderItems();
+    }
+
+    // Initial render
+    renderItems();
+
+    // Update user name
+    document.getElementById('user-name').textContent = CURRENT_USER.firstName + ' ' + CURRENT_USER.lastName.charAt(0) + '.';
+
+    // Close modal on outside click
+    document.getElementById('item-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>
